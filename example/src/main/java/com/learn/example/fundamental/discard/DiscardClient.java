@@ -1,7 +1,10 @@
-package com.learn.example.fundamental.echo;
+package com.learn.example.fundamental.discard;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -9,11 +12,11 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
-public final class EchoClient {
+public final class DiscardClient {
 
     static final boolean SSL = System.getProperty("ssl") != null;
     static final String HOST = System.getProperty("host", "127.0.0.1");
-    static final int PORT = Integer.parseInt(System.getProperty("port", "8007"));
+    static final int PORT = Integer.parseInt(System.getProperty("port", "8009"));
     static final int SIZE = Integer.parseInt(System.getProperty("size", "256"));
 
     public static void main(String[] args) throws Exception {
@@ -29,7 +32,6 @@ public final class EchoClient {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(group)
                     .channel(NioSocketChannel.class)
-                    .option(ChannelOption.TCP_NODELAY, true)
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
@@ -37,13 +39,11 @@ public final class EchoClient {
                             if (sslContext != null) {
                                 pipeline.addLast(sslContext.newHandler(ch.alloc(), HOST, PORT));
                             }
-
-                            pipeline.addLast(new EchoClientHandler());
+                            pipeline.addLast(new DiscardClientHandler());
                         }
                     });
 
             ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
-
             future.channel().closeFuture().sync();
         } finally {
             group.shutdownGracefully();
